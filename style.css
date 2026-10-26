@@ -154,8 +154,10 @@ button:disabled { opacity: .4; cursor: default; }
   flex: none; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 0;
   background: #fff; color: var(--ink); font-size: 16px; font-weight: 700;
 }
-.controls { display: flex; gap: 10px; margin-top: 16px; }
-.controls .btn { flex: 1; padding: 10px 6px; }
+/* ボタンが4〜5個でも、入りきらなければ折り返す（高さは .btn の 52px のまま） */
+.controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.controls .btn { flex: 1 1 auto; padding: 10px 6px; }
+.controls .btn.hint { background: #e7f4ec; color: var(--good); }
 .note { margin-top: 16px; color: var(--sub); font-size: 15px; }
 
 @keyframes pop { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }

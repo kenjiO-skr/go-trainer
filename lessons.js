@@ -197,7 +197,18 @@
     }
   ];
 
-  var api = { lessons: lessons, practice: practice };
+  // レッスンにはしない用語（タップで説明だけを出す。メニューのクリア数には入らない）
+  var terms = [
+    {
+      id: 'pass',
+      name: 'パス',
+      title: 'パス',
+      aliases: [],
+      text: ['パス：自分の番に石を置かずに相手へ番をゆずること。2人続けてパスすると対局が終わります。']
+    }
+  ];
+
+  var api = { lessons: lessons, practice: practice, terms: terms };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GoLessons = api;
 })(typeof window !== 'undefined' ? window : this);

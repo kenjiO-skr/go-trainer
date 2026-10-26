@@ -26,13 +26,13 @@
     });
   }
 
-  // 用語の名前 → レッスンの id
-  var termIndex = {};
-  L.lessons.forEach(function (l) {
+  // 用語の名前 → レッスン（またはレッスンにしない用語）の id
+  var termIndex = {}, allTerms = L.lessons.concat(L.terms || []);
+  allTerms.forEach(function (l) {
     termIndex[l.name] = l.id;
     l.aliases.forEach(function (a) { termIndex[a] = l.id; });
   });
-  function lessonById(id) { return L.lessons.filter(function (l) { return l.id === id; })[0]; }
+  function lessonById(id) { return allTerms.filter(function (l) { return l.id === id; })[0]; }
 
   // {用語} をタップできる言葉にする
   function rich(text) {
@@ -117,6 +117,10 @@
         s.push('<circle cx="' + x + '" cy="' + y + '" r="26" fill="#c4432b"/>');
       } else if (m.type === 'ring') {
         s.push('<circle cx="' + x + '" cy="' + y + '" r="' + (onStone ? 50 : 30) + '" fill="none" stroke="#c4432b" stroke-width="7"/>');
+      } else if (m.type === 'hint') {
+        // 爺の指南：緑の二重丸（点滅しない）
+        s.push('<circle cx="' + x + '" cy="' + y + '" r="36" fill="none" stroke="#2f7d4f" stroke-width="7"/>');
+        s.push('<circle cx="' + x + '" cy="' + y + '" r="17" fill="none" stroke="#2f7d4f" stroke-width="7"/>');
       }
     });
     // 仮の石（半透明）。打てない点なら赤
@@ -173,7 +177,7 @@
   function openTerm(id) {
     var l = lessonById(id);
     if (!l) return;
-    openModal('<h2>' + esc(l.title) + '</h2>' + diagramHTML(l) +
+    openModal('<h2>' + esc(l.title) + '</h2>' + (l.diagram ? diagramHTML(l) : '') +
       l.text.map(function (t) { return '<p>' + rich(t) + '</p>'; }).join('') +
       '<button type="button" class="btn primary wide" data-act="close">わかった！</button>');
   }
@@ -462,9 +466,11 @@
       '<button type="button" class="btn" data-act="undo">待った</button>' +
       '<button type="button" class="btn" data-act="pass-ask">パス</button>' +
       '<button type="button" class="btn primary" data-act="score" hidden>数える</button>' +
+      '<button type="button" class="btn hint" data-act="hint">爺の指南</button>' +
       '<button type="button" class="btn" data-act="restart-ask">最初から</button>' +
       '</div>' +
-      '<p class="note">石は「二度タップ」で置きます。オレンジの輪は{アタリ}の石です。</p>');
+      '<p class="note">石は「二度タップ」で置きます。オレンジの輪は{アタリ}の石です。</p>' +
+      '<p class="note">困ったら「爺の指南」で、爺やが1手教えます（正解とはかぎりません）。</p>');
     var boardEl = app.querySelector('.board.game');
     bindBoard(boardEl, 9, onGameTap);
     // 画面を離れたら、コンピュータの手番のタイマーを止める
@@ -499,6 +505,7 @@
       marks: marking
         ? dead.map(function (i) { return { i: i, type: 'cross' }; })
         : G.hl.map(function (i) { return { i: i, type: 'triangle' }; })
+          .concat(G.hint && G.hint.i != null ? [{ i: G.hint.i, type: 'hint' }] : [])
     });
     app.querySelector('[data-cap="1"]').textContent = st.captures[BLACK];
     app.querySelector('[data-cap="2"]').textContent = st.captures[WHITE];
@@ -511,12 +518,14 @@
     else if (thinking) msg = 'コンピュータが考えています…';
     else if (G.ghostBad) msg = REASON[G.ghostBad];
     else if (G.ghost != null) msg = 'もう一度タップすると、ここに置きます。';
+    else if (G.hint) msg = G.hint.msg;
     else msg = (G.info ? G.info + ' ' : '') + 'あなたの番です。';
     app.querySelector('.status').innerHTML = rich(msg);
     app.querySelector('[data-act="undo"]').disabled = G.hist.length === 0;
     var passBtn = app.querySelector('[data-act="pass-ask"]');
     passBtn.hidden = st.over;
     passBtn.disabled = thinking;
+    app.querySelector('[data-act="hint"]').disabled = thinking || st.over;
     app.querySelector('[data-act="score"]').hidden = !marking;
   }
 
@@ -633,6 +642,13 @@
       if (!Game.passBlack(G)) return;
       hideToast(); drawGame(); saveGame();
       if (G.st.over) startScoring(); else runComputer();
+    },
+    // 爺の指南：押すと1手すすめる。もう一度押すと消す
+    hint: function () {
+      if (Game.computerToPlay(G) || G.st.over) return;
+      // 出すときは仮の石を消す（仮の石の文が先に出て、爺の文が隠れるため）
+      if (G.hint) G.hint = null; else { G.ghost = null; G.ghostBad = null; Game.hint(G); }
+      drawGame();
     },
     'dead-black': function (k) {
       closeModal();

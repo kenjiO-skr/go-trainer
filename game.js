@@ -1,25 +1,37 @@
 // 対局の進め方（DOMに依存しない。画面は app.js、テストは game.test.js）
 // G＝対局の状態。st＝盤の状態（rules.js）、hist＝待ったで戻る先、ghost＝仮の石の位置、
 // ghostBad＝仮の石の点に打てない理由、timer＝コンピュータの手番のタイマー、
-// dead＝終局後に死に石の印を付けた石（終局前は null）、result＝数えた結果
+// dead＝終局後に死に石の印を付けた石（終局前は null）、result＝数えた結果、
+// hint＝爺の指南（hint.js の suggest の結果。出していなければ null。保存しない）
 // env＝{ setTimeout, clearTimeout, random }。テストでは偽物を渡して時間を進める。
 (function (root) {
   'use strict';
 
   var R = (typeof module !== 'undefined' && module.exports) ? require('./rules.js') : root.GoRules;
+  var H = (typeof module !== 'undefined' && module.exports) ? require('./hint.js') : root.GoHint;
   var BLACK = R.BLACK, WHITE = R.WHITE;
   var THINK_MS = 700;
 
   function create(size) {
     return {
       st: R.createGame(size || 9), hist: [], ghost: null, ghostBad: null,
-      timer: null, dead: null, result: null, hl: [], info: ''
+      timer: null, dead: null, result: null, hl: [], info: '', hint: null
     };
   }
 
-  // 保存した対局から再開する。数え終わった対局は再開しない
+  // 保存データの盤の状態が使える形か（大きさ・盤の中身・手番・アゲハマ）
+  function validState(s) {
+    if (!s || typeof s !== 'object' || s.size !== 9) return false;
+    if (!Array.isArray(s.board) || s.board.length !== s.size * s.size) return false;
+    if (!s.board.every(function (c) { return c === 0 || c === 1 || c === 2; })) return false;
+    if (s.toPlay !== BLACK && s.toPlay !== WHITE) return false;
+    return !!s.captures && typeof s.captures[BLACK] === 'number' && typeof s.captures[WHITE] === 'number';
+  }
+
+  // 保存した対局から再開する。数え終わった対局・中身がおかしい保存データは再開しない（null＝新しい対局）
   function restore(saved) {
-    if (!saved || !saved.st || saved.done) return null;
+    if (!saved || !saved.st || saved.done || !validState(saved.st)) return null;
+    if (saved.hist != null && !(Array.isArray(saved.hist) && saved.hist.every(validState))) return null;
     var G = create(saved.st.size);
     G.st = saved.st;
     G.hist = saved.hist || [];
@@ -38,6 +50,7 @@
   // 1回目で仮の石。打てない点なら仮の石を赤くして理由を返す。同じ点をもう一度で打つ
   function tap(G, i) {
     if (G.st.over || G.st.toPlay !== BLACK) return { kind: 'ignore' };
+    G.hint = null;
     var res = R.playMove(G.st, i);
     if (!res.ok) { G.ghost = i; G.ghostBad = res.reason; return { kind: 'bad', reason: res.reason }; }
     if (G.ghost !== i) { G.ghost = i; G.ghostBad = null; return { kind: 'ghost' }; }
@@ -54,6 +67,7 @@
     G.hist.push(G.st);
     G.st = R.pass(G.st);
     clearGhost(G);
+    G.hint = null;
     G.hl = [];
     G.info = '';
     if (G.st.over) G.dead = [];
@@ -82,6 +96,7 @@
   // コンピュータが1手打つ。白番でなければ何もしない（タイマーが重なっても2回打たない）
   function computerTurn(G, random) {
     if (G.st.toPlay !== WHITE || G.st.over) return null;
+    G.hint = null;
     var move = chooseMove(G.st, G.st.passes > 0, random);
     if (move === null) {
       G.st = R.pass(G.st);
@@ -116,6 +131,7 @@
     if (!G.hist.length) return false;
     G.st = G.hist.pop();
     clearGhost(G);
+    G.hint = null;
     G.dead = null;
     G.result = null;
     G.hl = [];
@@ -143,11 +159,18 @@
     return G.result;
   }
 
+  // 爺の指南：いまの局面で1手すすめる。盤・待った・仮の石など、ほかの状態は変えない
+  function hint(G) {
+    G.hint = H.suggest(G.st);
+    return G.hint;
+  }
+
   var api = {
     THINK_MS: THINK_MS,
     create: create, restore: restore, toSaved: toSaved, computerToPlay: computerToPlay,
     tap: tap, passBlack: passBlack, chooseMove: chooseMove, computerTurn: computerTurn,
-    schedule: schedule, cancel: cancel, undo: undo, toggleDead: toggleDead, blackMarked: blackMarked, finish: finish
+    schedule: schedule, cancel: cancel, undo: undo, toggleDead: toggleDead, blackMarked: blackMarked, finish: finish,
+    hint: hint
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GoGame = api;
