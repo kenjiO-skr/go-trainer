@@ -1,0 +1,191 @@
+/* はじめての囲碁 — iPhone 縦画面（幅375px前後）を優先 */
+:root {
+  --bg: #f6f2ea;
+  --card: #ffffff;
+  --ink: #2a2622;
+  --sub: #7a7168;
+  --accent: #c4432b;      /* 差し色は朱の一色だけ */
+  --accent-soft: #fbe9e4;
+  --good: #2f7d4f;
+  --shadow: 0 2px 10px rgba(60, 40, 20, .08);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-size: 19px;
+  line-height: 1.75;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;   /* ダブルタップでの拡大を防ぐ */
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: calc(8px + env(safe-area-inset-top)) 18px calc(32px + env(safe-area-inset-bottom));
+}
+
+h1 { font-size: 28px; line-height: 1.35; margin: 12px 0 8px; letter-spacing: .02em; }
+h2 { font-size: 24px; line-height: 1.4; margin: 0 0 12px; }
+h3 { font-size: 19px; margin: 0 0 6px; }
+p { margin: 0 0 12px; }
+.sub { color: var(--sub); font-size: 17px; }
+.small { color: var(--sub); font-size: 15px; }
+
+button { font: inherit; color: inherit; touch-action: manipulation; cursor: pointer; }
+button:disabled { opacity: .4; cursor: default; }
+
+/* 上の帯 */
+.bar {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: 52px;
+}
+.back {
+  min-height: 48px; padding: 0 12px 0 2px;
+  background: none; border: 0; color: var(--accent); font-size: 18px; font-weight: 600;
+}
+.bar-right { color: var(--sub); font-size: 16px; font-variant-numeric: tabular-nums; }
+
+/* ボタン */
+.btn {
+  min-height: 52px; padding: 10px 18px;
+  border: 0; border-radius: 14px;
+  background: var(--card); box-shadow: var(--shadow);
+  font-size: 18px; font-weight: 600;
+}
+.btn.primary { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(196, 67, 43, .28); }
+.btn.wide { display: block; width: 100%; margin: 14px 0 0; }
+.btn:active:not(:disabled) { transform: scale(.98); }
+.row { display: flex; gap: 12px; margin-top: 16px; }
+.row .btn { flex: 1; }
+.link {
+  display: block; margin: 28px auto 0; min-height: 44px;
+  background: none; border: 0; color: var(--sub); font-size: 15px; text-decoration: underline;
+}
+
+/* メニュー */
+.hero { text-align: center; padding: 26px 0 18px; }
+.hero h1 { font-size: 34px; margin: 6px 0 4px; }
+.hero-stones { width: 120px; height: 64px; }
+.menu-item, .list-item {
+  display: flex; align-items: center; gap: 14px; width: 100%;
+  min-height: 76px; margin: 0 0 14px; padding: 12px 16px;
+  border: 0; border-radius: 18px; background: var(--card); box-shadow: var(--shadow);
+  text-align: left;
+}
+.menu-item .num, .list-item .num {
+  flex: none; width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--ink); color: #fff; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+.mi-text { flex: 1; display: flex; flex-direction: column; line-height: 1.4; }
+.mi-text b { font-size: 21px; }
+.mi-text small { color: var(--sub); font-size: 15px; font-variant-numeric: tabular-nums; }
+.chev, .check { flex: none; color: var(--sub); font-size: 26px; }
+.li-text { flex: 1; font-size: 20px; font-weight: 600; }
+.list { margin-top: 18px; }
+.list-item.done .num { background: var(--good); }
+.list-item.done .check { color: var(--good); font-weight: 700; }
+
+/* カード・説明 */
+.card { background: var(--card); border-radius: 20px; padding: 18px; box-shadow: var(--shadow); margin-top: 8px; }
+.caption { color: var(--sub); font-size: 15px; text-align: center; margin: 8px 0 14px; }
+.tag {
+  display: inline-block; margin-left: 10px; padding: 0 10px; vertical-align: middle;
+  border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 15px;
+}
+
+/* 用語（タップで説明） */
+.term {
+  display: inline; padding: 0 1px; margin: 0;
+  background: none; border: 0; border-bottom: 2px dotted var(--accent);
+  color: var(--accent); font-weight: 700; line-height: inherit;
+}
+
+/* 碁盤 */
+.board svg { display: block; width: 100%; height: auto; }
+.board.diagram { width: 62%; max-width: 240px; margin: 4px auto 0; }
+.board.play { width: 100%; max-width: 440px; margin: 10px auto 0; filter: drop-shadow(0 6px 14px rgba(90, 60, 20, .18)); }
+.board.play { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* 対局の盤は左右の余白（#app の 18px）まで広げて、交点の間隔を広くする */
+.board.play.game { width: calc(100% + 36px); max-width: none; margin: 10px -18px 0; }
+
+/* 問題 */
+.question { font-size: 20px; font-weight: 600; margin: 10px 0 4px; }
+.feedback { min-height: 3.6em; margin: 14px 0 0; padding: 12px 14px; border-radius: 14px; font-size: 18px; }
+.feedback:empty { padding: 0; }
+.feedback.info { background: #fff; color: var(--ink); }
+.feedback.good { background: #e7f4ec; color: var(--good); font-weight: 600; }
+.feedback.bad { background: var(--accent-soft); color: #8a2c1b; }
+.options { display: flex; gap: 12px; margin-top: 16px; }
+.options .btn { flex: 1; font-size: 22px; font-variant-numeric: tabular-nums; }
+.options .btn.right { background: var(--good); color: #fff; }
+.options .btn.wrong { opacity: .45; }
+
+/* 対局 */
+.players { display: flex; gap: 10px; margin-top: 4px; }
+.pl {
+  flex: 1; display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 16px; background: var(--card); box-shadow: var(--shadow);
+  font-size: 16px; line-height: 1.35; border: 3px solid transparent;
+}
+.pl.turn { border-color: var(--accent); }
+.pl small { display: block; color: var(--sub); font-size: 14px; }
+.num-cap { font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); font-size: 17px; }
+.stone { flex: none; width: 26px; height: 26px; border-radius: 50%; }
+.stone.b { background: radial-gradient(circle at 35% 32%, #6b6b6b, #0b0b0b 70%); }
+.stone.w { background: radial-gradient(circle at 35% 32%, #fff, #cfcbc2 80%); box-shadow: inset 0 0 0 1px #bbb; }
+.status { margin: 12px 0 0; min-height: 1.75em; font-weight: 600; }
+.toast {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 12px; padding: 12px 14px; border-radius: 16px;
+  background: var(--ink); color: #fff; font-size: 17px;
+  animation: pop .25s ease-out;
+}
+.toast[hidden] { display: none; }
+.toast p { flex: 1; margin: 0; line-height: 1.55; }
+.toast .term { color: #ffd2c7; border-bottom-color: #ffd2c7; }
+.toast .more {
+  flex: none; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 0;
+  background: #fff; color: var(--ink); font-size: 16px; font-weight: 700;
+}
+.controls { display: flex; gap: 10px; margin-top: 16px; }
+.controls .btn { flex: 1; padding: 10px 6px; }
+.note { margin-top: 16px; color: var(--sub); font-size: 15px; }
+
+@keyframes pop { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* 小窓 */
+.modal {
+  position: fixed; inset: 0; z-index: 10;
+  display: flex; align-items: flex-end; justify-content: center;
+  background: rgba(30, 24, 18, .45);
+}
+.modal[hidden] { display: none; }
+.sheet {
+  width: 100%; max-width: 480px; max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0; background: var(--bg);
+  animation: up .25s ease-out;
+}
+@keyframes up { from { transform: translateY(30px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* 終局の結果 */
+.result { font-size: 30px; font-weight: 800; margin: 6px 0 10px; }
+.result .diff { margin-left: 10px; font-size: 20px; color: var(--sub); font-variant-numeric: tabular-nums; }
+.score { width: 100%; border-collapse: collapse; margin: 6px 0 16px; font-size: 17px; }
+.score th, .score td { padding: 8px 4px; text-align: right; }
+.score th:first-child { text-align: left; font-weight: 600; }
+.score thead th { color: var(--sub); font-size: 14px; font-weight: 600; }
+.score td { font-variant-numeric: tabular-nums; }
+.score tbody tr + tr { box-shadow: inset 0 1px 0 rgba(0, 0, 0, .06); }
+.howto { background: var(--card); border-radius: 16px; padding: 14px 16px; font-size: 16px; box-shadow: var(--shadow); }
+.howto p:last-child { margin-bottom: 0; }
+
+.done-box { text-align: center; padding-top: 24px; }
+.big-emoji { font-size: 56px; }
